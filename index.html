@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>크리스마스 눈싸움</title>
+<meta name="description" content="누구나 함께 노는 크리스마스 3D 오픈월드 눈싸움">
+<meta property="og:title" content="🎄 크리스마스 눈싸움 3D">
+<meta property="og:description" content="브라우저로 바로 접속하는 크리스마스 오픈월드 눈싸움">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+<style>
+  :root {
+    --night:#0b1430; --night2:#1c2d5e; --ink:#f4f8ff; --muted:#a9bde6; --gold:#ffd34d; --red:#e53935; --sky:#7dd3ff; --mint:#7dffb0;
+    --display:"Jua","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --body:"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:radial-gradient(ellipse at 50% 20%, var(--night2), var(--night) 70%); color:var(--ink); font-family:var(--body); overflow:hidden; word-break:keep-all; }
+  canvas#snow { position:fixed; inset:0; width:100%; height:100%; pointer-events:none; }
+  main { position:relative; z-index:1; min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px 16px; gap:18px; }
+  h1 { font-family:var(--display); font-weight:400; font-size:clamp(34px, 8vw, 60px); margin:0; line-height:1.1; text-shadow:0 4px 0 #0006; }
+  h1 small { display:block; font-size:.42em; color:var(--sky); margin-top:6px; }
+  .ball { width:86px; height:86px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #fff, #dfe9ff 55%, #9fb5e6); box-shadow:0 10px 0 #0004, inset -8px -10px 0 #b8c9ee; animation:bounce 1s cubic-bezier(.3,.6,.4,1) infinite; }
+  @keyframes bounce { 0%,100% { transform:translateY(0) scale(1.06,.94); } 45% { transform:translateY(-34px) scale(.96,1.04); } }
+  .shadow { width:70px; height:12px; border-radius:50%; background:#0005; margin-top:-10px; animation:sh 1s cubic-bezier(.3,.6,.4,1) infinite; }
+  @keyframes sh { 45% { transform:scale(.6); opacity:.5; } }
+  #status { font-family:var(--display); font-size:22px; min-height:1.3em; }
+  #status.ok { color:var(--mint); }
+  .bar { width:min(360px, 100%); height:12px; border-radius:8px; background:#ffffff1c; overflow:hidden; }
+  .bar i { display:block; height:100%; width:4%; background:linear-gradient(90deg, var(--sky), var(--mint)); border-radius:8px; transition:width .8s ease; }
+  #sub { color:var(--muted); font-size:14px; min-height:1.2em; }
+  #tip { max-width:420px; color:#dfe8ff; font-size:15px; line-height:1.5; min-height:3em; transition:opacity .4s; }
+  #tip b { color:var(--gold); font-weight:400; font-family:var(--display); }
+  a.go { font-family:var(--display); font-size:20px; color:#fff; text-decoration:none; background:var(--red); padding:12px 28px; border-radius:16px; box-shadow:0 4px 0 #8e1c1a; }
+  a.go:active { transform:translateY(2px); box-shadow:0 2px 0 #8e1c1a; }
+  .foot { color:#7f93c2; font-size:12px; }
+</style>
+</head>
+<body>
+<canvas id="snow" aria-hidden="true"></canvas>
+<main>
+  <h1>🎄 크리스마스 눈싸움<small>3D 오픈월드 · 눈마을 1서버</small></h1>
+  <div aria-hidden="true" style="margin-top:34px"><div class="ball"></div><div class="shadow" style="margin:0 auto"></div></div>
+  <div id="status" role="status" aria-live="polite">눈마을 서버 확인 중…</div>
+  <div class="bar" aria-hidden="true"><i id="prog"></i></div>
+  <div id="sub"></div>
+  <div id="tip"></div>
+  <a class="go" id="go" href="https://christmas-snowball.onrender.com/">바로 입장하기</a>
+  <div class="foot">한동안 아무도 없으면 서버가 잠들어요. 깨우는 데 최대 1분 정도 걸려요.</div>
+</main>
+<script>
+const GAME = 'https://christmas-snowball.onrender.com';
+const $ = id => document.getElementById(id);
+const qs = location.search + location.hash;
+$('go').href = GAME + '/' + qs;
+
+// 기다리는 동안 보여줄 게임 팁
+const TIPS = [
+  '<b>안전지대</b>(초록 원) 밖에서는 다른 플레이어와도 눈싸움을 할 수 있어요',
+  '<b>나쁜 산타</b>를 쓰러뜨리면 반짝이는 황금 선물을 떨어뜨려요',
+  '선물 아이템은 <b>먹을수록 중첩</b>돼요. 연사를 먹으면 눈덩이 수도 늘어나요',
+  '모닥불 옆 통나무에 <b>앉아서(F)</b> 쉬면 체력이 빨리 차요',
+  '안전지대에서 <b>☕ 티타임(T)</b>으로 따뜻한 커피 한 잔!',
+  '<b>👕 꾸미기</b>에서 루돌프 코, 산타 수염, 토끼 귀를 골라 보세요',
+  '<b>폭발 눈덩이</b>는 주변 몬스터까지, <b>얼음 눈덩이</b>는 상대를 느리게 만들어요',
+];
+let tipI = Math.floor(Math.random() * TIPS.length);
+function nextTip() { const el = $('tip'); el.style.opacity = 0; setTimeout(() => { el.innerHTML = '💡 ' + TIPS[tipI++ % TIPS.length]; el.style.opacity = 1; }, 400); }
+nextTip(); setInterval(nextTip, 5000);
+
+// 서버가 깨어날 때까지 /health 를 확인하고, 준비되면 게임으로 이동
+const t0 = Date.now();
+let done = false;
+async function check() {
+  if (done) return;
+  const sec = Math.round((Date.now() - t0) / 1000);
+  const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 12000);
+  try {
+    const r = await fetch(GAME + '/health?t=' + Date.now(), { cache: 'no-store', signal: ctl.signal });
+    const j = r.ok ? await r.json() : null;
+    if (j && j.ok) {
+      done = true;
+      $('prog').style.width = '100%';
+      $('status').textContent = '서버 준비 완료! 입장합니다 ⛄'; $('status').className = 'ok';
+      $('sub').textContent = j.players ? `지금 ${j.players}명이 놀고 있어요` : '';
+      setTimeout(() => location.replace(GAME + '/' + qs), sec < 2 ? 150 : 700);
+      return;
+    }
+  } catch (e) { /* 아직 잠자는 중이거나 연결 실패: 다시 시도 */ }
+  finally { clearTimeout(to); }
+  const s = Math.round((Date.now() - t0) / 1000);
+  if (s >= 2) $('status').textContent = '💤 잠든 서버를 깨우는 중…';
+  $('sub').textContent = s >= 2 ? `${s}초 지남${s > 90 ? ' · 오래 걸리면 아래 버튼으로 직접 들어가 보세요' : ''}` : '';
+  $('prog').style.width = Math.min(95, 4 + s / 60 * 91) + '%';
+  setTimeout(check, 2000);
+}
+check();
+
+// 내리는 눈
+const cv = $('snow'), cx = cv.getContext('2d');
+let flakes = [];
+function resize() {
+  const d = Math.min(2, devicePixelRatio || 1); cv.width = innerWidth * d; cv.height = innerHeight * d; cx.setTransform(d, 0, 0, d, 0, 0);
+  flakes = Array.from({ length: Math.round(innerWidth * innerHeight / 9000) }, () => ({ x: Math.random() * innerWidth, y: Math.random() * innerHeight, r: 1 + Math.random() * 2.6, s: 20 + Math.random() * 45, w: Math.random() * 6 }));
+}
+resize(); addEventListener('resize', resize);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let last = performance.now();
+function draw(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  cx.clearRect(0, 0, innerWidth, innerHeight); cx.fillStyle = '#ffffffcc';
+  for (const f of flakes) {
+    if (!reduce) { f.y += f.s * dt; f.x += Math.sin(now / 1000 + f.w) * 12 * dt; if (f.y > innerHeight + 4) { f.y = -4; f.x = Math.random() * innerWidth; } }
+    cx.beginPath(); cx.arc(f.x, f.y, f.r, 0, Math.PI * 2); cx.fill();
+  }
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
