@@ -40,14 +40,14 @@
 <body>
 <canvas id="snow" aria-hidden="true"></canvas>
 <main>
-  <h1>🎄 크리스마스 눈싸움<small>3D 오픈월드 · 눈마을 1서버</small></h1>
+  <h1><span id="ttl">🎄 크리스마스 눈싸움</span><small id="ttlSub">3D 오픈월드 · 눈마을 1서버</small></h1>
   <div aria-hidden="true" style="margin-top:34px"><div class="ball"></div><div class="shadow" style="margin:0 auto"></div></div>
   <div id="status" role="status" aria-live="polite">눈마을 서버 확인 중…</div>
   <div class="bar" aria-hidden="true"><i id="prog"></i></div>
   <div id="sub"></div>
   <div id="tip"></div>
   <a class="go" id="go" href="https://christmas-snowball.onrender.com/">바로 입장하기</a>
-  <div class="foot">한동안 아무도 없으면 서버가 잠들어요. 깨우는 데 최대 1분 정도 걸려요.</div>
+  <div class="foot" id="foot">한동안 아무도 없으면 서버가 잠들어요. 깨우는 데 최대 1분 정도 걸려요.</div>
 </main>
 <script>
 const GAME = 'https://christmas-snowball.onrender.com';
@@ -55,16 +55,27 @@ const $ = id => document.getElementById(id);
 const qs = location.search + location.hash;
 $('go').href = GAME + '/' + qs;
 
+// 언어: 브라우저 언어로 자동 (한국어 · English · 日本語 · 中文)
+const LANG = (() => { const n = String(navigator.language || 'ko').toLowerCase().slice(0, 2); return ['ko', 'en', 'ja', 'zh'].includes(n) ? n : 'en'; })();
+const L = {
+  ko: { ttl: '🎄 크리스마스 눈싸움', sub: '3D 오픈월드 · 눈마을 1서버', check: '눈마을 서버 확인 중…', go: '바로 입장하기', foot: '한동안 아무도 없으면 서버가 잠들어요. 깨우는 데 최대 1분 정도 걸려요.',
+    ready: '서버 준비 완료! 입장합니다 ⛄', playing: n => `지금 ${n}명이 놀고 있어요`, waking: '💤 잠든 서버를 깨우는 중…', sec: s => `${s}초 지남`, long: ' · 오래 걸리면 아래 버튼으로 직접 들어가 보세요',
+    tips: ['<b>안전지대</b>(초록 원) 밖에서는 다른 플레이어와도 눈싸움을 할 수 있어요', '<b>나쁜 산타</b>를 쓰러뜨리면 반짝이는 황금 선물을 떨어뜨려요', '선물 아이템은 <b>먹을수록 중첩</b>돼요. 연사를 먹으면 눈덩이 수도 늘어나요', '모닥불 옆 통나무에 <b>앉아서(F)</b> 쉬면 체력이 빨리 차요', '안전지대에서 <b>☕ 티타임(T)</b>으로 따뜻한 커피 한 잔!', '<b>👕 꾸미기</b>에서 루돌프 코, 산타 수염, 토끼 귀를 골라 보세요', '<b>폭발 눈덩이</b>는 주변 몬스터까지, <b>얼음 눈덩이</b>는 상대를 느리게 만들어요'] },
+  en: { ttl: '🎄 Christmas Snowball Fight', sub: '3D open world · Snow Village Server 1', check: 'Checking the Snow Village server…', go: 'Enter now', foot: 'The server naps when nobody is around. Waking it up can take up to a minute.',
+    ready: 'Server ready! Entering ⛄', playing: n => `${n} playing right now`, waking: '💤 Waking up the sleeping server…', sec: s => `${s}s passed`, long: ' · Taking long? Try the button below',
+    tips: ['Outside the <b>Safe Zone</b> (green circle) you can snowball-fight other players too', 'Defeat a <b>Bad Santa</b> and it drops shiny golden gifts', 'Gift items <b>stack</b> the more you collect. Rapid fire also raises your snowball count', 'Rest <b>seated (F)</b> on the logs by the campfire to heal faster', 'Enjoy a warm cup of coffee with <b>☕ Tea Time (T)</b> in the Safe Zone!', 'Pick a Rudolph nose, Santa beard or bunny ears in <b>👕 Customize</b>', '<b>Boom snowballs</b> hit nearby monsters too, <b>ice snowballs</b> slow targets down'] },
+  ja: { ttl: '🎄 クリスマス雪合戦', sub: '3Dオープンワールド · 雪の村 サーバー1', check: '雪の村サーバーを確認中…', go: 'すぐに入場', foot: 'しばらく誰もいないとサーバーが眠ります。起こすのに最大1分ほどかかります。',
+    ready: 'サーバー準備完了！入場します ⛄', playing: n => `いま${n}人が遊んでいます`, waking: '💤 眠っているサーバーを起こしています…', sec: s => `${s}秒経過`, long: ' · 長くかかるときは下のボタンから入ってみてください',
+    tips: ['<b>安全地帯</b>（緑の円）の外では、ほかのプレイヤーとも雪合戦ができます', '<b>わるいサンタ</b>を倒すと、きらきらの金のプレゼントを落とします', 'プレゼントのアイテムは<b>取るほど重ねがけ</b>できます。連射を取ると雪玉の数も増えます', 'たき火のそばの丸太に<b>座って(F)</b>休むと、体力が早く回復します', '安全地帯で<b>☕ ティータイム(T)</b>、あたたかいコーヒーを一杯！', '<b>👕 着せかえ</b>でルドルフの鼻、サンタのひげ、うさ耳を選んでみよう', '<b>爆発雪玉</b>はまわりのモンスターにも、<b>氷雪玉</b>は相手を遅くします'] },
+  zh: { ttl: '🎄 圣诞雪球大战', sub: '3D 开放世界 · 雪村 1服', check: '正在检查雪村服务器…', go: '立即进入', foot: '一段时间没人时服务器会休眠，唤醒最多需要 1 分钟左右。',
+    ready: '服务器已就绪！正在进入 ⛄', playing: n => `现在有 ${n} 人在玩`, waking: '💤 正在唤醒休眠的服务器…', sec: s => `已过 ${s} 秒`, long: ' · 等太久的话请点下面的按钮直接进入',
+    tips: ['在<b>安全区</b>（绿色圆圈）外也可以和其他玩家打雪仗', '打倒<b>坏圣诞老人</b>会掉落闪亮的金色礼物', '礼物道具<b>越吃越能叠加</b>。吃到连射还会增加雪球数量', '在篝火旁的木头上<b>坐下(F)</b>休息，体力恢复更快', '在安全区用<b>☕ 下午茶(T)</b>来一杯热咖啡！', '在<b>👕 装扮</b>里试试驯鹿红鼻子、圣诞老人胡子和兔耳朵', '<b>爆炸雪球</b>会波及周围怪物，<b>冰冻雪球</b>能让对手变慢'] },
+}[LANG];
+document.documentElement.lang = LANG === 'zh' ? 'zh-CN' : LANG;
+$('ttl').textContent = L.ttl; $('ttlSub').textContent = L.sub; $('status').textContent = L.check; $('go').textContent = L.go; $('foot').textContent = L.foot;
+document.title = L.ttl.replace('🎄 ', '');
 // 기다리는 동안 보여줄 게임 팁
-const TIPS = [
-  '<b>안전지대</b>(초록 원) 밖에서는 다른 플레이어와도 눈싸움을 할 수 있어요',
-  '<b>나쁜 산타</b>를 쓰러뜨리면 반짝이는 황금 선물을 떨어뜨려요',
-  '선물 아이템은 <b>먹을수록 중첩</b>돼요. 연사를 먹으면 눈덩이 수도 늘어나요',
-  '모닥불 옆 통나무에 <b>앉아서(F)</b> 쉬면 체력이 빨리 차요',
-  '안전지대에서 <b>☕ 티타임(T)</b>으로 따뜻한 커피 한 잔!',
-  '<b>👕 꾸미기</b>에서 루돌프 코, 산타 수염, 토끼 귀를 골라 보세요',
-  '<b>폭발 눈덩이</b>는 주변 몬스터까지, <b>얼음 눈덩이</b>는 상대를 느리게 만들어요',
-];
+const TIPS = L.tips;
 let tipI = Math.floor(Math.random() * TIPS.length);
 function nextTip() { const el = $('tip'); el.style.opacity = 0; setTimeout(() => { el.innerHTML = '💡 ' + TIPS[tipI++ % TIPS.length]; el.style.opacity = 1; }, 400); }
 nextTip(); setInterval(nextTip, 5000);
@@ -82,16 +93,16 @@ async function check() {
     if (j && j.ok) {
       done = true;
       $('prog').style.width = '100%';
-      $('status').textContent = '서버 준비 완료! 입장합니다 ⛄'; $('status').className = 'ok';
-      $('sub').textContent = j.players ? `지금 ${j.players}명이 놀고 있어요` : '';
+      $('status').textContent = L.ready; $('status').className = 'ok';
+      $('sub').textContent = j.players ? L.playing(j.players) : '';
       setTimeout(() => location.replace(GAME + '/' + qs), sec < 2 ? 150 : 700);
       return;
     }
   } catch (e) { /* 아직 잠자는 중이거나 연결 실패: 다시 시도 */ }
   finally { clearTimeout(to); }
   const s = Math.round((Date.now() - t0) / 1000);
-  if (s >= 2) $('status').textContent = '💤 잠든 서버를 깨우는 중…';
-  $('sub').textContent = s >= 2 ? `${s}초 지남${s > 90 ? ' · 오래 걸리면 아래 버튼으로 직접 들어가 보세요' : ''}` : '';
+  if (s >= 2) $('status').textContent = L.waking;
+  $('sub').textContent = s >= 2 ? L.sec(s) + (s > 90 ? L.long : '') : '';
   $('prog').style.width = Math.min(95, 4 + s / 60 * 91) + '%';
   setTimeout(check, 2000);
 }
